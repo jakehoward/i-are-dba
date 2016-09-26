@@ -21,6 +21,7 @@
     "mocha": "^3.0.2"
   },
   "dependencies": {
+    "big-integer": "^1.6.16",
     "lodash": "^4.16.2"
   }
 }
