@@ -1,0 +1,26 @@
+{
+  "name": "i-are-dba",
+  "version": "0.0.1",
+  "description": "Infer RDBMS structure from matrix of data.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha ./test --recursive --timeout 1000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jakehoward/i-are-dba.git"
+  },
+  "author": "jakehoward",
+  "license": "SEE LICENSE IN LICENSE",
+  "bugs": {
+    "url": "https://github.com/jakehoward/i-are-dba/issues"
+  },
+  "homepage": "https://github.com/jakehoward/i-are-dba#readme",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.0.2"
+  },
+  "dependencies": {
+    "lodash": "^4.16.2"
+  }
+}
