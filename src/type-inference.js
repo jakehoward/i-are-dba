@@ -20,15 +20,12 @@ function inferType (dbEngine, data) {
 }
 
 function isBoolean(data) {
-  let first = null;
-  let second = null;
+  const allowedValues =
+        [0, 1, true, false, 'TRUE', 'true', 'FALSE', 'false', 'yes', 'YES',
+         'no', 'NO', 'Y', 'y', 'N', 'n', '1', '0', 't', 'T', 'f', 'F'];
 
   for (let i = 0; i < data.length; ++i) {
-    if (first === null) {
-      first = data[i];
-    } else if (second === null && data[i] !== first) {
-      second = data[i];
-    } else if (data[i] !== first && data[i] !== second) {
+    if (!contains(allowedValues, data[i])) {
       return false;
     }
   }
@@ -70,6 +67,10 @@ function isXInt(min, max, data) {
     }
   }
   return true;
+}
+
+function contains (iterable, value) {
+  return _.filter(iterable, (v) => v === value).length > 0;
 }
 
 module.exports = inferType;

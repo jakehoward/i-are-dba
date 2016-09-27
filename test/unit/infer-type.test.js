@@ -15,7 +15,11 @@ describe('RDBMS type inference', () => {
         ['t', 'f', 't', 't', 'f', 't', 'f'],
         [1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1],
         ['true', 'false', 'true', 'true', 'false'],
-        [true, true, false, false, true, false, true]
+        [true, true, false, false, true, false, true],
+        ['TRUE', 'false', 'FALSE', 'false', 'TRUE', 'true'],
+        ['y', 'n', 'Y', 'n', 'N'],
+        ['yes', 'no', 'NO', 'YES'],
+        [1, 0, true, false, 't', 'f', 'T', 'F', 'YES', 'yes', 'Y', 'y', 'NO', 'no', 'n', 'N', 'TRUE', 'true', 'FALSE', 'false', '1', '0']
       ];
       const expectInferredTypeOfBoolean = (example) => expect(inferType(example)).to.equal('BOOLEAN');
       forAll(examples, expectInferredTypeOfBoolean);
