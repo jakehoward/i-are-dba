@@ -30,9 +30,13 @@ describe('RDBMS type inference', () => {
         [0, 1, 1, 0, 2, 0, 1],
         ['0', 1, '1', 0, 2, 0, 1],
         [32767, -32768, 16, 55, 67],
-        [32767, '-32768', 16, '55', 67],
+        ['32767', '-32768', 16, '55', 67],
         [-8, -20, -35],
-        ['-8', '-20', '-35']
+        ['-8', '-20', '-35'],
+        [15e2, 12, 567],
+        ['15e2', 12, 567],
+        [1500e-2, 54, 66],
+        ['1500e-2', 54, 66]
       ];
       const expectInferredTypeOfSmallInt = (example) => expect(inferType(example)).to.equal('SMALLINT');
       forAll(examples, expectInferredTypeOfSmallInt);
@@ -43,7 +47,8 @@ describe('RDBMS type inference', () => {
         [1, 1, 0, 567, -32769],
         [32768, 5, 3, 2, 1, 1],
         [-2147483648, -50, -50, 34, 2147483647],
-        ['-2147483648', '-50', '-50', '34', 2147483647]
+        ['-2147483648', '-50', '-50', '34', 2147483647],
+        ['-2147483e3', '-50', '-50', '34', 2147483e3]
       ];
       const expectInferredTypeOfInteger = (example) => expect(inferType(example)).to.equal('INTEGER');
       forAll(examples, expectInferredTypeOfInteger);
@@ -55,7 +60,8 @@ describe('RDBMS type inference', () => {
         [-2147483649, 5, 3, 2, 1, 1], // one under
         [-2147489, 5, 3, 2, 1, 1, 2147483648], // one over
         [-2147483648876, -50, -50, 34, 214748364799],
-        ['-9223372036854775808', '-50', '-50', '34', '9223372036854775807'] // can only handle limit as string
+        ['-9223372036854775808', '-50', '-50', '34', '9223372036854775807'], // can only handle limit as string
+        ['-922337203685477E4', '-50', '-50', '34', '922337203685477E4'] // can only handle limit as string, scientific notation
       ];
       const expectInferredTypeOfBigInt = (example) => expect(inferType(example)).to.equal('BIGINT');
       forAll(examples, expectInferredTypeOfBigInt);
