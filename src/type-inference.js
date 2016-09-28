@@ -21,11 +21,11 @@ function inferType (dbEngine, data) {
 
 function isBoolean(data) {
   const allowedValues =
-        [0, 1, true, false, 'TRUE', 'true', 'FALSE', 'false', 'yes', 'YES',
-         'no', 'NO', 'Y', 'y', 'N', 'n', '1', '0', 't', 'T', 'f', 'F'];
+        [0, 1, true, false, 'true', 'false', 'yes', 'no', 'y', 'n', '1', '0', 't', 'f'];
 
   for (let i = 0; i < data.length; ++i) {
-    if (!contains(allowedValues, data[i])) {
+    const d = data[i].constructor === String ? data[i].toLowerCase() : data[i];
+    if (!contains(allowedValues, d)) {
       return false;
     }
   }
