@@ -66,6 +66,17 @@ describe('RDBMS type inference', () => {
       const expectInferredTypeOfBigInt = (example) => expect(inferType(example)).to.equal('BIGINT');
       forAll(examples, expectInferredTypeOfBigInt);
     });
+
+    it('correctly infers DECIMAL type from data', () => {
+      const examples = [
+        [['4.6', '123.4567', '1.3'], 'DECIMAL(7,4)'],
+        [['45', '1.3'], 'DECIMAL(3,1)'],
+        [['0.000000000045', '111111111111'], 'DECIMAL(24,12)'],
+        [['1234e-2', '45.3'], 'DECIMAL(4,2)']
+      ];
+      const expectInferredTypeOfDecimal = (example) => expect(inferType(example[0])).to.equal(example[1]);
+      forAll(examples, expectInferredTypeOfDecimal);
+      });
   });
 });
 
