@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const _ = require('lodash');
-const genericInferType = require('../../src/type-inference');
+const genericInferType = require('../../src/type-inference-two');
 
 describe('RDBMS type inference', () => {
   describe('Redshift', () => {
