@@ -68,12 +68,14 @@ describe('RDBMS type inference', () => {
       forAll(examples, expectInferredTypeOfBigInt);
     });
 
-    it.skip('correctly infers DECIMAL type from data', () => {
+    it('correctly infers DECIMAL type from data', () => {
+      // http://docs.aws.amazon.com/redshift/latest/dg/r_Numeric_types201.html#r_Numeric_types201-decimal-or-numeric-type
+      // means we have extra +1 precision than strictly necessary.
       const examples = [
-        [['4.6', '123.4567', '1.3'], 'DECIMAL(7,4)'],
-        [['45', '1.3'], 'DECIMAL(3,1)'],
-        [['0.000000000045', '111111111111'], 'DECIMAL(24,12)'],
-        [['1234e-2', '45.3'], 'DECIMAL(4,2)']
+        [['4.6', '123.4567', '1.3'], 'DECIMAL(8,4)'],
+        [['45', '1.3'], 'DECIMAL(4,1)'],
+        [['0.000000000045', '111111111111'], 'DECIMAL(25,12)'],
+        [['1234e-2', '45.3'], 'DECIMAL(5,2)']
       ];
       const expectInferredTypeOfDecimal = (example) => expect(inferType(example[0])).to.equal(example[1]);
       forAll(examples, expectInferredTypeOfDecimal);
