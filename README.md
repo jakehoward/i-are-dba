@@ -1,4 +1,6 @@
-# i-are-dba
+# i-are-dba (in alpha)
+
+Warning: the interface is likely to change during the early stages of development.
 
 I are DBA produces CREATE TABLE SQL statements based on the data to be written to the table.
 
