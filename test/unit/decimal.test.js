@@ -1,7 +1,7 @@
 const { expect } = require('chai');
 const forAll = require('../for-all');
 const _ = require('lodash');
-const { calculateLength } = require('../../src/number');
+const { calculatePrecision } = require('../../src/decimal');
 
 describe('Number - Calculate length', () => {
   it('calculates the correct length of input numbers', () => {
@@ -17,7 +17,7 @@ describe('Number - Calculate length', () => {
       { input: '0000.0004560000', expected: 10 },
       { input: '0000.000456000e3', expected: 6 }
     ];
-    const expectCorrectAnswer = (example) => expect(calculateLength(example.input)).to.equal(example.expected);
+    const expectCorrectAnswer = (example) => expect(calculatePrecision(example.input)).to.equal(example.expected);
     forAll(examples, expectCorrectAnswer);
   });
 });

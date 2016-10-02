@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const { max } = require('./utils');
 
-function calculateLength(value) {
+function calculatePrecision(value) {
   function deconstructNumber(numAsString) {
     const rawExponent = numAsString.indexOf('e') !== -1 ? Number(numAsString.split('e')[1]) : 0;
     const rawSignificand = _.trimStart(numAsString.indexOf('e') !== -1 ? numAsString.split('e')[0] : numAsString, '0');
@@ -12,17 +12,17 @@ function calculateLength(value) {
     return ({ significand: normalisedSignificand, exponent: normalisedExponent });
   }
 
-  if (!Number.isNaN(Number(value))) {
-    const { significand, exponent } = deconstructNumber(String(value));
-    if (exponent < 0) {
-      return max(significand.length, Math.abs(exponent));
-    }
-
-    return significand.length + exponent;
+  if (Number.isNaN(Number(value))) {
+    throw new Error('Not possible to calculate precision for NaN');
   }
-  return String(value).length
+  const { significand, exponent } = deconstructNumber(String(value));
+  if (exponent < 0) {
+    return max(significand.length, Math.abs(exponent));
+  }
+
+  return significand.length + exponent;
 }
 
 module.exports = {
-  calculateLength
+  calculatePrecision
 };

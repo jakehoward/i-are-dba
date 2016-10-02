@@ -2,6 +2,7 @@ const _ = require('lodash');
 const bigInt = require('big-integer');
 const bigDecimal = require('big-decimal');
 const { max, contains } = require('./utils');
+const { calculatePrecision } = require('./decimal');
 
 function inferType (dbEngine, column) {
   if (dbEngine != 'REDSHIFT') {
@@ -12,10 +13,11 @@ function inferType (dbEngine, column) {
   // Winning type is last one left standing, order of preference is top to bottom, left to right.
   // Filters in the same group should be generalisations of each other, with the right hand side being 
   // most general (e.g. all INTEGER's can be VARCHAR's)
-  const treeOfTypeFilters = [[{ fn: isBoolean, t: 'BOOLEAN' }],
-                             [{ fn: isSmallInt, t: 'SMALLINT' }, { fn: isInt, t: 'INTEGER' }, { fn: isBigInt, t: 'BIGINT' }] /*, { fn: isDecimal, t: 'DECIMAL(a,b)' } ],*/
-                             /*[{ fn: isDate, t: 'DATE' }, { fn: isDateTime, t: 'DATETIME' }]*/
-                            ];
+  const treeOfTypeFilters = [
+    [{ fn: isBoolean, t: 'BOOLEAN' }],
+    /*[{ fn: isDate, t: 'DATE' }, { fn: isDateTime, t: 'DATETIME' }],*/
+    [{ fn: isSmallInt, t: 'SMALLINT' }, { fn: isInt, t: 'INTEGER' }, { fn: isBigInt, t: 'BIGINT' }] /*, { fn: isDecimal, t: 'DECIMAL' } ]*/
+  ];
   
   const filteredTree = _.reduce(column, (acc, value) => {
     const remainingTree = _.map(acc.treeOfTypeFilters, (typeFilters) => {
@@ -24,12 +26,15 @@ function inferType (dbEngine, column) {
       return remainingTypeFilters;
     });
 
-    // const valueLength = calculateLength(value);
+    const valueIsDecimal = isDecimal(value);
+    const decimalPrecision = valueIsDecimal ? calculatePrecision(value) : 0;
+    const decimalScale = 0; //valueIsDecimal ? calculateDecimalScale(value) : 0;
+
     return {
-      treeOfTypeFilters: remainingTree
-      // maxLen: max(valueLength, acc.maxLen)
+      treeOfTypeFilters: remainingTree,
+      decimal: { maxPrecision: max(acc.decimal.maxPrecision, decimalPrecision), maxScale: max(acc.decimal.maxScale, decimalScale) }
     };
-  }, { treeOfTypeFilters, maxLen: 0, decimal: { maxLHS: 0, maxRHS: 0 } }).treeOfTypeFilters;
+  }, { treeOfTypeFilters, decimal: { maxPrecision: 0, maxScale: 0 } }).treeOfTypeFilters;
 
   return _.head(_.flatten(filteredTree)).t; // out of the filters left over, take the first one (best match)
   throw new Error('No type inferred for column');
@@ -82,16 +87,7 @@ function isBigInt(value) {
 }
 
 function isDecimal(value) { // TODO: check this won't blow up with numbers that don't have a decimal point
-  if (Number.isNaN(Number(value))) {
-    return false;
-  }
-  const bigN = new bigDecimal(value);
-  const lenLHS = bigN.mant.length + bigN.exp;
-  const lenRHS = -bigN.exp > 0 ? -bigN.exp : 0;
-  
-  const precision = lenLHS + lenRHS;
-  const scale = lenRHS;
-  return true; //type: `DECIMAL(${precision},${scale})`;
+  return false; //type: `DECIMAL(${precision},${scale})`;
 }
 
 function isXInt(min, max, value) {
