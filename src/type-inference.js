@@ -1,18 +1,18 @@
 const _ = require('lodash');
 const bigInt = require('big-integer');
-const bigDecimal = require('big-decimal');
+const BigDecimal = require('big-decimal');
 const moment = require('moment');
 const { max, contains } = require('./utils');
 const { calculatePrecision, calculateScale, calculateMagnitude } = require('./decimal');
 
 function inferType (dbEngine, column) {
-  if (dbEngine != 'REDSHIFT') {
+  if (dbEngine !== 'REDSHIFT') {
     throw new Error('Unsupported db engine for column type inference');
   }
 
   // Type filters is a stack of stacks. When a check fails, it gets popped off.
   // Winning type is best of those left standing, order of preference is top to bottom, left to right.
-  // Filters in the same group should be generalisations of each other, with the right hand side being 
+  // Filters in the same group should be generalisations of each other, with the right hand side being
   // most general (e.g. all INTEGER's can be BIGINT's)
   const treeOfTypeFilters = [
     [{ fn: isBoolean, t: 'BOOLEAN' }],
@@ -20,7 +20,7 @@ function inferType (dbEngine, column) {
     [{ fn: isDate, t: 'DATE' }, { fn: isDateTime, t: 'DATETIME' }],
     [{ fn: () => true, t: 'VARCHAR' }]
   ];
-  
+
   const { filteredTree, decimal, maxStringLen } = _.reduce(column, (acc, value) => {
     const remainingTree = _.map(acc.filteredTree, (typeFilters) => {
       const remainingTypeFilters = _.filter(typeFilters, (tf) => { return tf.fn(value); });
@@ -51,13 +51,15 @@ function inferType (dbEngine, column) {
     return `VARCHAR(${maxStringLen})`;
   }
 
-  return inferredType.t;
+  if (inferredType.t) {
+    return inferredType.t;
+  }
   throw new Error('No type inferred for column');
 }
 
 function isDate(value) {
   const d = moment(new Date(value));
-  return d.isValid() && d.isSame(moment(d.format("YYYY-MM-DD"), 'YYYY-MM-DD'));
+  return d.isValid() && d.isSame(moment(d.format('YYYY-MM-DD'), 'YYYY-MM-DD'));
 }
 
 function isDateTime(value) {
@@ -70,7 +72,7 @@ function isBoolean(value) {
 
   const v = value.constructor === String ? value.toLowerCase() : value;
   if (!contains(allowedValues, v)) {
-    return false ;
+    return false;
   }
   return true;
 };
@@ -79,7 +81,7 @@ function isSmallInt(value) {
   const max = 32767;
   const min = -32768;
 
-  if(isXInt(min, max, value)) {
+  if (isXInt(min, max, value)) {
     return true;
   }
   return false;
@@ -89,7 +91,7 @@ function isInt(value) {
   const max = 2147483647;
   const min = -2147483648;
 
-  if(isXInt(min, max, value)) {
+  if (isXInt(min, max, value)) {
     return true;
   }
   return false;
@@ -113,7 +115,7 @@ function isBigInt(value) {
 
 function isDecimal(value) {
   try {
-    const bigD = new bigDecimal(String(value));
+    const bigD = new BigDecimal(String(value));
     if (!bigD) {
       return false
     }

@@ -1,0 +1,12 @@
+{
+    "extends": "standard",
+    "plugins": [
+        "standard",
+        "promise"
+    ],
+    "env": { "node": true, "browser": false, "mocha": true },
+    "rules": {
+      "semi": 0,
+      "space-before-function-paren": 0
+    }
+}

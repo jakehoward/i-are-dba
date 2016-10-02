@@ -1,6 +1,5 @@
 const { expect } = require('chai');
 const forAll = require('../for-all');
-const _ = require('lodash');
 const { calculatePrecision, calculateScale, calculateMagnitude } = require('../../src/decimal');
 
 describe('Decimal', () => {
@@ -55,5 +54,3 @@ describe('Decimal', () => {
     forAll(examples, expectCorrectAnswer);
   });
 });
-
-
