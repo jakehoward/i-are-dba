@@ -132,4 +132,30 @@ function max() {
 //   return _.filter(String(value), (c) => c !== '.').length;
 // }
 
+// for numeric values, calculate the length of the number taking into account e notation and decimal points
+// for strings, return length of string
+function calculateLength(value) {
+  function deconstructNumber(numAsString) {
+    if (numAsString.indexOf('e') !== -1) {
+      const rawExponent = Number(numAsString.split('e')[1]);
+      const rawSignificand = _.trimStart(numAsString.split('e')[0], '0');
+      const decimalPosition = rawSignificand.indexOf('.') !== -1 ? rawSignificand.indexOf('.') : rawSignificand.length;
+      const lenRHS = decimalPosition != rawSignificand.length ? rawSignificand.split('.')[1].length : 0;
+      const normalisedExponent = rawExponent - lenRHS;
+      const normalisedSignificand = _.join(rawSignificand.split('.'), '');
+      return { normalisedSignificand, normalisedExponent };
+    }
+  }
+
+  if (!Number.isNaN(Number(value))) {
+    const { significand, exponent } = deconstructNumber(String(value));
+    if (exponent < 0) {
+      return max(significand.length, Math.abs(exponent));
+    } else {
+      return significand.length, + exponent;
+    }
+  }
+  return String(value).length
+}
+
 module.exports = inferType;
