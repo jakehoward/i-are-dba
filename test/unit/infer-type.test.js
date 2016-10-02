@@ -77,11 +77,24 @@ describe('RDBMS type inference', () => {
         [['45', '1.3'], 'DECIMAL(4,1)'],
         [['0.000000000045', '111111111111'], 'DECIMAL(25,12)'],
         [['1234e-2', '45.3'], 'DECIMAL(5,2)'],
-        [[1234.5, '123456789012345678901234567890123456', '0.12'], 'VARCHAR(39)'] // should overflow to VARCHAR
+        [[1234.5, '123456789012345678901234567890123456', '0.12'], 'VARCHAR(36)'] // should overflow to VARCHAR
       ];
       const expectInferredTypeOfDecimal = (example) => expect(inferType(example[0])).to.equal(example[1]);
       forAll(examples, expectInferredTypeOfDecimal);
-      });
+    });
+
+    it('correctly infers VARCHAR type from data', () => {
+      // http://docs.aws.amazon.com/redshift/latest/dg/r_Numeric_types201.html#r_Numeric_types201-decimal-or-numeric-type
+      // means we have extra +1 precision than strictly necessary.
+      const examples = [
+        [[125, '34e56', '1.3'], 'VARCHAR(5)'],
+        [[125, 'test'], 'VARCHAR(4)'],
+        [[125, 'some string', '1.3'], 'VARCHAR(11)'],
+        [[true, 't', 'true', 'y', 'yes', '1', 1, false, 'f', 'false', 'n', 'no', '0', 0, 'FaLsEy'], 'VARCHAR(6)']
+      ];
+      const expectInferredTypeOfVarchar = (example) => expect(inferType(example[0])).to.equal(example[1]);
+      forAll(examples, expectInferredTypeOfVarchar);
+    });
   });
 });
 

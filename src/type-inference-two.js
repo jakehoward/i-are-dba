@@ -20,7 +20,7 @@ function inferType (dbEngine, column) {
     [{ fn: () => true, t: 'VARCHAR' }]
   ];
   
-  const { filteredTree, decimal } = _.reduce(column, (acc, value) => {
+  const { filteredTree, decimal, maxStringLen } = _.reduce(column, (acc, value) => {
     const remainingTree = _.map(acc.filteredTree, (typeFilters) => {
       const remainingTypeFilters = _.filter(typeFilters, (tf) => { return tf.fn(value); });
 
@@ -33,16 +33,21 @@ function inferType (dbEngine, column) {
 
     return {
       filteredTree: remainingTree,
-      decimal: { maxMagnitude: max(acc.decimal.maxMagnitude, decimalMagnitude), maxScale: max(acc.decimal.maxScale, decimalScale) }
+      decimal: { maxMagnitude: max(acc.decimal.maxMagnitude, decimalMagnitude), maxScale: max(acc.decimal.maxScale, decimalScale) },
+      maxStringLen: max(acc.maxStringLen, String(value).length)
     };
-  }, { filteredTree: treeOfTypeFilters, decimal: { maxMagnitude: 0, maxScale: 0 } });
+  }, { filteredTree: treeOfTypeFilters, decimal: { maxMagnitude: 0, maxScale: 0 }, maxStringLen: 0 });
 
   const inferredType = _.head(_.flatten(filteredTree)); // out of the filters left over, take the first one (best match)
 
   if (inferredType.t === 'DECIMAL') {
     const precision = decimal.maxMagnitude + decimal.maxScale + 1; // head room of 1 because DECIMAL(19,0) does not fully support 19 9's
     const scale = decimal.maxScale;
-    return precision <= 38 ? `${inferredType.t}(${precision},${scale})` : `VARCHAR(${precision})`; // the fact precision is one over takes care of the decimal point, way too big if original is in scientific notation, but won't optimise for that now.
+    return precision <= 38 ? `${inferredType.t}(${precision},${scale})` : `VARCHAR(${maxStringLen})`;
+  }
+
+  if (inferredType.t === 'VARCHAR') {
+    return `VARCHAR(${maxStringLen})`;
   }
 
   return inferredType.t;
