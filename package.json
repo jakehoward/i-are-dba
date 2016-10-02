@@ -1,6 +1,6 @@
 {
   "name": "i-are-dba",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "description": "Infer RDBMS structure from matrix of data.",
   "main": "./distribution/index.js",
   "scripts": {
