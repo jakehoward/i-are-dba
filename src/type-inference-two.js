@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const bigInt = require('big-integer');
 const bigDecimal = require('big-decimal');
+const moment = require('moment');
 const { max, contains } = require('./utils');
 const { calculatePrecision, calculateScale, calculateMagnitude } = require('./decimal');
 
@@ -15,8 +16,8 @@ function inferType (dbEngine, column) {
   // most general (e.g. all INTEGER's can be BIGINT's)
   const treeOfTypeFilters = [
     [{ fn: isBoolean, t: 'BOOLEAN' }],
-    /*[{ fn: isDate, t: 'DATE' }, { fn: isDateTime, t: 'DATETIME' }],*/
     [{ fn: isSmallInt, t: 'SMALLINT' }, { fn: isInt, t: 'INTEGER' }, { fn: isBigInt, t: 'BIGINT' }, { fn: isDecimal, t: 'DECIMAL' }],
+    [{ fn: isDate, t: 'DATE' }, { fn: isDateTime, t: 'DATETIME' }],
     [{ fn: () => true, t: 'VARCHAR' }]
   ];
   
@@ -52,6 +53,16 @@ function inferType (dbEngine, column) {
 
   return inferredType.t;
   throw new Error('No type inferred for column');
+}
+
+function isDate(value) {
+  const d = moment(new Date(value));
+  return d.isValid() && d.isSame(moment(d.format("YYYY-MM-DD"), 'YYYY-MM-DD'));
+}
+
+function isDateTime(value) {
+  const d = moment(new Date(value));
+  return d.isValid();
 }
 
 function isBoolean(value) {

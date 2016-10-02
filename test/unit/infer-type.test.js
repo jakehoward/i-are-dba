@@ -84,8 +84,6 @@ describe('RDBMS type inference', () => {
     });
 
     it('correctly infers VARCHAR type from data', () => {
-      // http://docs.aws.amazon.com/redshift/latest/dg/r_Numeric_types201.html#r_Numeric_types201-decimal-or-numeric-type
-      // means we have extra +1 precision than strictly necessary.
       const examples = [
         [[125, '34e56', '1.3'], 'VARCHAR(5)'],
         [[125, 'test'], 'VARCHAR(4)'],
@@ -94,6 +92,22 @@ describe('RDBMS type inference', () => {
       ];
       const expectInferredTypeOfVarchar = (example) => expect(inferType(example[0])).to.equal(example[1]);
       forAll(examples, expectInferredTypeOfVarchar);
+    });
+
+    it('correctly infers DATE type from data', () => {
+      const examples = [
+        ['2016-01-15', '2016-01-01T00:00:00.000Z'],
+      ];
+      const expectInferredTypeOfDecimal = (example) => expect(inferType(example)).to.equal('DATE');
+      forAll(examples, expectInferredTypeOfDecimal);
+    });
+
+    it('correctly infers DATETIME type from data', () => {
+      const examples = [
+        ['2016-01-15', '2016-01-01T00:00:35.000Z'],
+      ];
+      const expectInferredTypeOfDecimal = (example) => expect(inferType(example)).to.equal('DATETIME');
+      forAll(examples, expectInferredTypeOfDecimal);
     });
   });
 });
