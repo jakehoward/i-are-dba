@@ -1,132 +1,141 @@
 const _ = require('lodash');
 const bigInt = require('big-integer');
 const bigDecimal = require('big-decimal');
+const moment = require('moment');
+const { max, contains } = require('./utils');
+const { calculatePrecision, calculateScale, calculateMagnitude } = require('./decimal');
 
-function inferType (dbEngine, data) {
+function inferType (dbEngine, column) {
   if (dbEngine != 'REDSHIFT') {
     throw new Error('Unsupported db engine for column type inference');
   }
 
-  if (isBoolean(data)) {
-    return 'BOOLEAN';
-  } else if (isSmallInt(data)) {
-    return 'SMALLINT';
-  } else if (isInteger(data)) {
-    return 'INTEGER';
-  } else if (isBigInt(data)) {
-    return 'BIGINT';
-  } else if (isDecimal(data)) {
-    return calculateDecimalType(data);
+  // Type filters is a stack of stacks. When a check fails, it gets popped off.
+  // Winning type is best of those left standing, order of preference is top to bottom, left to right.
+  // Filters in the same group should be generalisations of each other, with the right hand side being 
+  // most general (e.g. all INTEGER's can be BIGINT's)
+  const treeOfTypeFilters = [
+    [{ fn: isBoolean, t: 'BOOLEAN' }],
+    [{ fn: isSmallInt, t: 'SMALLINT' }, { fn: isInt, t: 'INTEGER' }, { fn: isBigInt, t: 'BIGINT' }, { fn: isDecimal, t: 'DECIMAL' }],
+    [{ fn: isDate, t: 'DATE' }, { fn: isDateTime, t: 'DATETIME' }],
+    [{ fn: () => true, t: 'VARCHAR' }]
+  ];
+  
+  const { filteredTree, decimal, maxStringLen } = _.reduce(column, (acc, value) => {
+    const remainingTree = _.map(acc.filteredTree, (typeFilters) => {
+      const remainingTypeFilters = _.filter(typeFilters, (tf) => { return tf.fn(value); });
+
+      return remainingTypeFilters;
+    });
+
+    const valueIsDecimal = isDecimal(value);
+    const decimalMagnitude = valueIsDecimal ? calculateMagnitude(value) : 0;
+    const decimalScale = valueIsDecimal ? calculateScale(value) : 0;
+
+    return {
+      filteredTree: remainingTree,
+      decimal: { maxMagnitude: max(acc.decimal.maxMagnitude, decimalMagnitude), maxScale: max(acc.decimal.maxScale, decimalScale) },
+      maxStringLen: max(acc.maxStringLen, String(value).length)
+    };
+  }, { filteredTree: treeOfTypeFilters, decimal: { maxMagnitude: 0, maxScale: 0 }, maxStringLen: 0 });
+
+  const inferredType = _.head(_.flatten(filteredTree)); // out of the filters left over, take the first one (best match)
+
+  if (inferredType.t === 'DECIMAL') {
+    const precision = decimal.maxMagnitude + decimal.maxScale + 1; // head room of 1 because DECIMAL(19,0) does not fully support 19 9's
+    const scale = decimal.maxScale;
+    return precision <= 38 ? `${inferredType.t}(${precision},${scale})` : `VARCHAR(${maxStringLen})`;
   }
+
+  if (inferredType.t === 'VARCHAR') {
+    return `VARCHAR(${maxStringLen})`;
+  }
+
+  return inferredType.t;
   throw new Error('No type inferred for column');
 }
 
-function isBoolean(data) {
-  const allowedValues =
-        [0, 1, true, false, 'true', 'false', 'yes', 'no', 'y', 'n', '1', '0', 't', 'f'];
-
-  for (let i = 0; i < data.length; ++i) {
-    const d = data[i].constructor === String ? data[i].toLowerCase() : data[i];
-    if (!contains(allowedValues, d)) {
-      return false;
-    }
-  }
-  return true;
+function isDate(value) {
+  const d = moment(new Date(value));
+  return d.isValid() && d.isSame(moment(d.format("YYYY-MM-DD"), 'YYYY-MM-DD'));
 }
 
-function isSmallInt(data) {
+function isDateTime(value) {
+  const d = moment(new Date(value));
+  return d.isValid();
+}
+
+function isBoolean(value) {
+  const allowedValues = [0, 1, true, false, 'true', 'false', 'yes', 'no', 'y', 'n', '1', '0', 't', 'f'];
+
+  const v = value.constructor === String ? value.toLowerCase() : value;
+  if (!contains(allowedValues, v)) {
+    return false ;
+  }
+  return true;
+};
+
+function isSmallInt(value) {
   const max = 32767;
   const min = -32768;
 
-  return isXInt(min, max, data);
+  if(isXInt(min, max, value)) {
+    return true;
+  }
+  return false;
 }
 
-function isInteger(data) {
+function isInt(value) {
   const max = 2147483647;
   const min = -2147483648;
 
-  return isXInt(min, max, data);
+  if(isXInt(min, max, value)) {
+    return true;
+  }
+  return false;
 }
 
-function isBigInt(data) {
+function isBigInt(value) {
   const max = bigInt('9223372036854775807');
   const min = bigInt('-9223372036854775808');
 
-  for (let i = 0; i < data.length; ++i) {
-    try {
-      let n = bigInt(data[i]);
-      if (n.greater(max) || n.lesser(min)) {
-        return false;
-      }
-    } catch (e) {
+  try {
+    // will blow up if not a number
+    const n = bigInt(value);
+    if (n.greater(max) || n.lesser(min)) {
       return false;
     }
-  }
-  return true;
-}
-
-function isXInt(min, max, data) {
-  for (let i = 0; i < data.length; ++i) {
-    let n = Number(data[i]);
-    if (!Number.isInteger(n) || n > max || n < min) {
-      return false;
-    }
-  }
-  return true;
-}
-
-// Would pass for integer too, but not important in this context
-// as we're assuming it will only be called after all integer options
-// are exhausted
-// TODO: improve this, almost certainly can be simplified
-function isDecimal(data) {
-  let maxLen = 0;
-  let pointPositions = [];
-  for(let i = 0; i < data.length; ++i) {
-    if (Number.isNaN(Number(data[i]))) {
-      return false;
-    }
-    const bigN = new bigDecimal(data[i]);
-    pointPositions.push(max(bigN.mant.length + bigN.exp, 0));
-    maxLen = max(bigN.mant.length, Math.abs(bigN.mant.length + bigN.exp), maxLen);
-  }
-  let maxPoint = _.reduce(pointPositions, (max, p) => p > max ? p : max, 0);
-  let minPoint = _.reduce(pointPositions, (min, p) => p < min ? p : min, maxLen);
-  const maxRedshiftPrecision = 37; // being conservative as it can't deal with a full 38
-  if ((maxPoint - minPoint) > (maxRedshiftPrecision / 2)) {
+  } catch (e) {
     return false;
   }
-  // Being a bit lazy here as that is a whole order of magnitide less than it can deal with.
-  // But it won't go all the way up to 9999.... so too hard to bother for v0.0.1
-  return maxLen < maxRedshiftPrecision;
+  return true;
 }
 
-function calculateDecimalType(data) {
-  // Assume isDecimal has been called, so no belts and braces checks
-  let maxRHS = 0;
-  let maxLHS = 0;
-  for (let i = 0; i < data.length; ++i) {
-    const bigN = new bigDecimal(data[i]);
-    const lenLHS = bigN.mant.length + bigN.exp;
-    maxLHS = max(lenLHS, maxLHS);
-    const lenRHS = -bigN.exp;
-    maxRHS = max(lenRHS, maxRHS);
+function isDecimal(value) {
+  try {
+    const bigD = new bigDecimal(String(value));
+    if (!bigD) {
+      return false
+    }
+    // Give ourselves headroom of 1 order of magnitude because not all lengths are
+    // fully supported (precision 19 doesn't cover values above: 9223372036854775807)
+    // http://docs.aws.amazon.com/redshift/latest/dg/r_Numeric_types201.html#r_Numeric_types201-decimal-or-numeric-type
+    if (calculatePrecision(value) < 38) {
+      return true;
+    }
+    return false;
+  } catch (e) {
+    return false;
   }
-  if (maxRHS + maxLHS > 37) { throw new Error("Attempt to make larger decimal than possible"); }
-  const precision = maxLHS + maxRHS;
-  const scale = maxRHS;
-  return `DECIMAL(${precision},${scale})`;
 }
 
-function contains (iterable, value) {
-  return _.filter(iterable, (v) => v === value).length > 0;
-}
-
-function max() {
-  if (arguments.length === 1) {
-    return _.head(arguments);
+function isXInt(min, max, value) {
+  let n = Number(value);
+  if (!Number.isInteger(n) || n > max || n < min) {
+    return false;
   }
-  return _.reduce(_.tail(arguments), (max, i) => i > max ? i : max, _.head(arguments));
+
+  return true;
 }
 
 module.exports = inferType;
