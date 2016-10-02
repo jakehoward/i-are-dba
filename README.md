@@ -1,6 +1,10 @@
 # i-are-dba
 
-I are DBA produces CREATE TABLE SQL statements based on the data to be written to the table. 
+I are DBA produces CREATE TABLE SQL statements based on the data to be written to the table.
+
+Supported RDBMS engines:
+
+* Redshift
 
 ## Example usage
 
@@ -36,3 +40,5 @@ undefeated BOOLEAN
 ## Known issues
 
 Due to a shortcoming in node, it is only possible to make the most of the BIGINTEGER type if you pass large numbers as type `String`. This affects numbers above 9007199254740991 or below -9007199254740991.
+
+Because [Redshift does not support the logical maximum value](http://docs.aws.amazon.com/redshift/latest/dg/r_Numeric_types201.html#r_Numeric_types201-decimal-or-numeric-type) for `DECIMAL(19,N)`, all `DECIMAL` values have a precision one greater than is (usually) strictly necessary. Work to eek out every last byte of performance might be done in the future.
