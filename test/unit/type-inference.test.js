@@ -96,7 +96,8 @@ describe('RDBMS type inference', () => {
 
     it('correctly infers DATE type from data', () => {
       const examples = [
-        ['2016-01-15', '2016-01-01T00:00:00.000Z']
+        ['2016-01-15', '2016-01-01T00:00:00.000Z'],
+        ['1965-08-02', '1988-12-21', '1973-02-13', '2001-09-11']
       ];
       const expectInferredTypeOfDecimal = (example) => expect(inferType(example)).to.equal('DATE');
       forAll(examples, expectInferredTypeOfDecimal);

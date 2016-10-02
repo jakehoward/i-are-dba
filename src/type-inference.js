@@ -58,12 +58,16 @@ function inferType (dbEngine, column) {
 }
 
 function isDate(value) {
-  const d = moment(new Date(value));
-  return d.isValid() && d.isSame(moment(d.format('YYYY-MM-DD'), 'YYYY-MM-DD'));
+  const d = value.constructor === Date ? moment.utc(value) : moment.utc(new Date(value));
+  if (!d.isValid()) {
+    return false;
+  }
+  const hasOnlyDateComponents = d.isSame(moment.utc(d.format('YYYY-MM-DD'), 'YYYY-MM-DD'));
+  return hasOnlyDateComponents;
 }
 
 function isDateTime(value) {
-  const d = moment(new Date(value));
+  const d = value.constructor === Date ? moment.utc(value) : moment.utc(new Date(value));
   return d.isValid();
 }
 
