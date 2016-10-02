@@ -38,11 +38,13 @@ function inferType (dbEngine, column) {
   }, { filteredTree: treeOfTypeFilters, decimal: { maxMagnitude: 0, maxScale: 0 } });
 
   const inferredType = _.head(_.flatten(filteredTree)); // out of the filters left over, take the first one (best match)
+
   if (inferredType.t === 'DECIMAL') {
     const precision = decimal.maxMagnitude + decimal.maxScale + 1; // head room of 1 because DECIMAL(19,0) does not fully support 19 9's
     const scale = decimal.maxScale;
-    return `${inferredType.t}(${precision},${scale})`;
+    return precision <= 38 ? `${inferredType.t}(${precision},${scale})` : `VARCHAR(${precision})`; // the fact precision is one over takes care of the decimal point, way too big if original is in scientific notation, but won't optimise for that now.
   }
+
   return inferredType.t;
   throw new Error('No type inferred for column');
 }
@@ -95,7 +97,7 @@ function isBigInt(value) {
 
 function isDecimal(value) {
   try {
-    const bigD = new bigDecimal(value);
+    const bigD = new bigDecimal(String(value));
     if (!bigD) {
       return false
     }
