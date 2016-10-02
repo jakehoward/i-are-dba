@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const bigInt = require('big-integer');
 const bigDecimal = require('big-decimal');
+const { max, contains } = require('./utils');
 
 function inferType (dbEngine, column) {
   if (dbEngine != 'REDSHIFT') {
@@ -100,62 +101,6 @@ function isXInt(min, max, value) {
   }
 
   return true;
-}
-
-function contains (iterable, value) {
-  return _.filter(iterable, (v) => v === value).length > 0;
-}
-
-function max() {
-  if (arguments.length === 1) {
-    return _.head(arguments);
-  }
-  return _.reduce(_.tail(arguments), (max, i) => i > max ? i : max, _.head(arguments));
-}
-
-// TODO FIX THIS - BROKEN
-// function calculateLength(value) {
-//   if (!Number.isNaN(Number(value))) {
-//     const stringVal = String(value);
-//     if (stringVal.indexOf('e') !== -1) {
-//       const exponent = Number(stringVal.split('e')[1]);
-//       const significand = stringVal.split('e')[0];
-//       const decimalPosIndex = significand.indexOf('.') !== -1 ? significand.indexOf('.') : significand.length;
-//       const lhsLen = decimalPosIndex;
-//       const rhsLen = significand.length - decimalPosIndex;
-//       const normalisedExponent = exponent + lhsLen;
-//       console.log('Exponent', exponent, 'significand', significand, 'decimalPosIndex', decimalPosIndex, 'lhsLen', lhsLen, 'rhsLen', rhsLen, 'normalisedExponent', normalisedExponent);
-//       return _.filter(significand, (c) => c !== '.').length + normalisedExponent;
-//     }
-//   }
-// 
-//   return _.filter(String(value), (c) => c !== '.').length;
-// }
-
-// for numeric values, calculate the length of the number taking into account e notation and decimal points
-// for strings, return length of string
-function calculateLength(value) {
-  function deconstructNumber(numAsString) {
-    if (numAsString.indexOf('e') !== -1) {
-      const rawExponent = Number(numAsString.split('e')[1]);
-      const rawSignificand = _.trimStart(numAsString.split('e')[0], '0');
-      const decimalPosition = rawSignificand.indexOf('.') !== -1 ? rawSignificand.indexOf('.') : rawSignificand.length;
-      const lenRHS = decimalPosition != rawSignificand.length ? rawSignificand.split('.')[1].length : 0;
-      const normalisedExponent = rawExponent - lenRHS;
-      const normalisedSignificand = _.join(rawSignificand.split('.'), '');
-      return { normalisedSignificand, normalisedExponent };
-    }
-  }
-
-  if (!Number.isNaN(Number(value))) {
-    const { significand, exponent } = deconstructNumber(String(value));
-    if (exponent < 0) {
-      return max(significand.length, Math.abs(exponent));
-    } else {
-      return significand.length, + exponent;
-    }
-  }
-  return String(value).length
 }
 
 module.exports = inferType;

@@ -1,11 +1,5 @@
 const _ = require('lodash');
-
-function max() {
-  if (arguments.length === 1) {
-    return _.head(arguments);
-  }
-  return _.reduce(_.tail(arguments), (max, i) => i > max ? i : max, _.head(arguments));
-}
+const { max } = require('./utils');
 
 function calculateLength(value) {
   function deconstructNumber(numAsString) {
