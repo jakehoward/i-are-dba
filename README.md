@@ -9,7 +9,7 @@ Supported RDBMS engines:
 ## Example usage
 
 ```javascript
-/* example usage - run node index.js to try yourself */
+/* example usage - run node example.js to try yourself (uses Node.js 6.3) */
 const makeCreateTableStatement = require('./src/create-table');
 
 const data = [
