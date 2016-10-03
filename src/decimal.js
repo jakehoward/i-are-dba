@@ -32,6 +32,7 @@ function calculateMagnitude(value) {
 }
 
 function deconstructNumber(numAsString) {
+  numAsString = numAsString.replace(/E/, 'e');
   const rawExponent = numAsString.indexOf('e') !== -1 ? Number(numAsString.split('e')[1]) : 0;
   const rawSignificand = _.trimStart(numAsString.indexOf('e') !== -1 ? numAsString.split('e')[0] : numAsString, '0');
   const decimalPosition = rawSignificand.indexOf('.') !== -1 ? rawSignificand.indexOf('.') : rawSignificand.length;
