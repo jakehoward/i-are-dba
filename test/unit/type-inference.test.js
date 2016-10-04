@@ -88,7 +88,8 @@ describe('RDBMS type inference', () => {
         [[125, '34e56', '1.3'], 'VARCHAR(5)'],
         [[125, 'test'], 'VARCHAR(4)'],
         [[125, 'some string', '1.3'], 'VARCHAR(11)'],
-        [[true, 't', 'true', 'y', 'yes', '1', 1, false, 'f', 'false', 'n', 'no', '0', 0, 'FaLsEy'], 'VARCHAR(6)']
+        [[true, 't', 'true', 'y', 'yes', '1', 1, false, 'f', 'false', 'n', 'no', '0', 0, 'FaLsEy'], 'VARCHAR(6)'],
+        [['Mar-03', 'Mar-05'], 'VARCHAR(6)']
       ];
       const expectInferredTypeOfVarchar = (example) => expect(inferType(example[0])).to.equal(example[1]);
       forAll(examples, expectInferredTypeOfVarchar);
@@ -96,7 +97,7 @@ describe('RDBMS type inference', () => {
 
     it('correctly infers DATE type from data', () => {
       const examples = [
-        ['2016-01-15', '2016-01-01T00:00:00.000Z'],
+        ['2016-01-15', '2016-01-01'],
         ['1965-08-02', '1988-12-21', '1973-02-13', '2001-09-11']
       ];
       const expectInferredTypeOfDecimal = (example) => expect(inferType(example)).to.equal('DATE');
@@ -105,7 +106,9 @@ describe('RDBMS type inference', () => {
 
     it('correctly infers DATETIME type from data', () => {
       const examples = [
-        ['2016-01-15', '2016-01-01T00:00:35.000Z']
+        ['2016-01-15', '2016-01-01T00:00:35.000Z'],
+        ['2016-01-15', '2016-01-01T00:00:00.000Z'],
+        ['2016-01-15', '1999-06-12:21:30:45', '2015-03-05']
       ];
       const expectInferredTypeOfDecimal = (example) => expect(inferType(example)).to.equal('DATETIME');
       forAll(examples, expectInferredTypeOfDecimal);

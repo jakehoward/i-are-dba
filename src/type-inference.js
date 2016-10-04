@@ -58,7 +58,7 @@ function inferType (dbEngine, column) {
 }
 
 function isDate(value) {
-  const d = value.constructor === Date ? moment.utc(value) : moment.utc(new Date(value));
+  const d = value.constructor === Date ? moment.utc(value) : moment.utc(value, 'YYYY-MM-DD', true);
   if (!d.isValid()) {
     return false;
   }
@@ -67,8 +67,8 @@ function isDate(value) {
 }
 
 function isDateTime(value) {
-  const d = value.constructor === Date ? moment.utc(value) : moment.utc(new Date(value));
-  return d.isValid();
+  const d = value.constructor === Date ? moment.utc(value) : moment.utc(value, 'YYYY-MM-DD:HH:mm:ss', true);
+  return d.isValid() || moment.utc(value, 'YYYY-MM-DD', true).isValid() || moment.utc(value, 'YYYY-MM-DDTHH:mm:ss.SSSZ', true).isValid();
 }
 
 function isBoolean(value) {
