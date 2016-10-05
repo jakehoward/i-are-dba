@@ -1,10 +1,12 @@
 const _ = require('lodash');
 const inferType = _.partial(require('./type-inference'), 'REDSHIFT');
+const format = require('pg-format');
 
 module.exports = function createTableStatment(tableName, data) {
   const columns = makeColumns(data);
-  return `CREATE TABLE ${tableName} (
-${_.join(_.map(columns, (c) => c.name + ' ' + c.type), ',\n')}
+  const escapedTableName = _.join(_.map(String(tableName).split('.'), (i) => format.ident(i)), '.');
+  return `CREATE TABLE ${escapedTableName} (
+${_.join(_.map(columns, (c) => format.ident(c.name) + ' ' + c.type), ',\n')}
 )`
 }
 

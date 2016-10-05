@@ -1,6 +1,6 @@
 {
   "name": "i-are-dba",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Infer RDBMS structure from matrix of data.",
   "main": "./distribution/index.js",
   "scripts": {
@@ -34,6 +34,7 @@
     "big-decimal": "^1.0.2",
     "big-integer": "^1.6.16",
     "lodash": "^4.16.2",
-    "moment": "^2.15.1"
+    "moment": "^2.15.1",
+    "pg-format": "^1.0.3"
   }
 }
