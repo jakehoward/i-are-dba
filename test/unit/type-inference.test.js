@@ -77,7 +77,8 @@ describe('RDBMS type inference', () => {
         [['45', '1.3'], 'DECIMAL(4,1)'],
         [['0.000000000045', '111111111111'], 'DECIMAL(25,12)'],
         [['1234e-2', '45.3'], 'DECIMAL(5,2)'],
-        [[1234.5, '123456789012345678901234567890123456', '0.12'], 'VARCHAR(36)'] // should overflow to VARCHAR
+        [[1234.5, '123456789012345678901234567890123456', '0.12'], 'VARCHAR(36)'], // should overflow to VARCHAR
+        [['12.0'], 'DECIMAL(4,1)']
       ];
       const expectInferredTypeOfDecimal = (example) => expect(inferType(example[0])).to.equal(example[1]);
       forAll(examples, expectInferredTypeOfDecimal);

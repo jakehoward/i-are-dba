@@ -102,6 +102,9 @@ function isInt(value) {
 }
 
 function isBigInt(value) {
+  if (!isInteger(value)) {
+    return false;
+  }
   const max = bigInt('9223372036854775807');
   const min = bigInt('-9223372036854775808');
 
@@ -137,11 +140,16 @@ function isDecimal(value) {
 
 function isXInt(min, max, value) {
   let n = Number(value);
-  if (!Number.isInteger(n) || n > max || n < min) {
+  if (!isInteger(value) || n > max || n < min) {
     return false;
   }
 
   return true;
+}
+
+// Like Number.isInteger() but when passed string with decimal point, returns false.
+function isInteger(value) {
+  return Boolean(String(value).indexOf('.') === -1 && Number.isInteger(Number(value)));
 }
 
 module.exports = inferType;
