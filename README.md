@@ -1,12 +1,14 @@
-# i-are-dba (in alpha)
+# i-are-dba (beta)
 
-Warning: the interface is likely to change during the early stages of development.
+i-are-dba produces CREATE TABLE statements dynamically based on the data to be written to the table. It's been battle tested in a closed source app that allows users to automagically sync google sheets to Amazon Redshift.
 
-I are DBA produces CREATE TABLE SQL statements based on the data to be written to the table.
+## npm
 
-Supported RDBMS engines:
+Available on npm: [i-are-dba](https://www.npmjs.com/package/i-are-dba)
 
-* Redshift
+```
+npm i i-are-dba
+```
 
 ## Example usage
 
@@ -31,16 +33,18 @@ output:
 
 ```
 CREATE TABLE players (
-name VARCHAR(9),
-date_of_birth DATE,
-height DECIMAL(4,2),
-num_wins SMALLINT,
-undefeated BOOLEAN
-)
+  name VARCHAR(9),
+  date_of_birth DATE,
+  height DECIMAL(4,2),
+  num_wins SMALLINT,
+  undefeated BOOLEAN
+);
 ```
 
 ## Known issues
 
-Due to a shortcoming in node, it is only possible to make the most of the BIGINTEGER type if you pass large numbers as type `String`. This affects numbers above 9007199254740991 or below -9007199254740991.
+Due to the Number implementation in node, it's only possible to make the most of the BIGINTEGER type if you pass large numbers as type `String`. This affects numbers above 9007199254740991 or below -9007199254740991.
 
-Because [Redshift does not support the logical maximum value](http://docs.aws.amazon.com/redshift/latest/dg/r_Numeric_types201.html#r_Numeric_types201-decimal-or-numeric-type) for `DECIMAL(19,N)`, all `DECIMAL` values have a precision one greater than is (usually) strictly necessary. Work to eek out every last byte of performance might be done in the future.
+Because [Redshift does not support the logical maximum value](http://docs.aws.amazon.com/redshift/latest/dg/r_Numeric_types201.html#r_Numeric_types201-decimal-or-numeric-type) for `DECIMAL(19,N)`, all `DECIMAL` values have a precision one greater than is (usually) strictly necessary.
+
+In principle this could be generalised to different RDBMS engines and redesigned to stream data through it rather than only work on what will fit in memory. However, both would probably best be done as a rewrite rather than trying to build on what's here.
